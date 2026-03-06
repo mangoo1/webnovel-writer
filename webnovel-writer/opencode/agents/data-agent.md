@@ -133,34 +133,23 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "{project_root}" where
 - 更新 `disambiguation_warnings/pending`
 - **新增 `chapter_meta`**（钩子/模式/结束状态）
 
-### Step E: 生成章节摘要文件（新增）
+### Step E: 章节摘要（由 /webnovel-summarize 处理）
 
-**输出路径**: `.webnovel/summaries/ch{NNNN}.md`
+**注意**: 此步骤已移至 `/webnovel-write` Step 5.5 由 `/webnovel-summarize` skill 处理。
 
-**章节编号规则**: 4位数字，如 `0001`, `0099`, `0100`
+**data-agent 责任**:
+- ✅ 确保 `.webnovel/summaries/` 目录存在
+- ❌ 不再生成基础摘要（由 webnovel-summarize 生成增强摘要）
 
-**摘要文件格式**:
-```markdown
----
-chapter: 0099
-time: "前一夜"
-location: "萧炎房间"
-characters: ["萧炎", "药老"]
-state_changes: ["萧炎: 斗者9层→准备突破"]
-hook_type: "危机钩"
-hook_strength: "strong"
----
-
-## 剧情摘要
-{主要事件，100-150字}
-
-## 伏笔
-- [埋设] 三年之约提及
-- [推进] 青莲地心火线索
-
-## 承接点
-{下章衔接，30字}
+```bash
+# 仅确保目录存在
+mkdir -p "${PROJECT_ROOT}/.webnovel/summaries"
 ```
+
+**增强摘要格式（由 /webnovel-summarize 生成）**:
+- 字数: 300-500字（比基础摘要更详细）
+- 包含: `## 剧情主线` + `## 伏笔状态` + `## 情绪节奏` + `## 承接点`
+- 用途: 供 context-agent 滑动窗口检索，替代 RAG 向量检索
 
 ### Step F: AI 场景切片
 
@@ -213,7 +202,7 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "{project_root}" style extrac
 - B AI 实体提取
 - C 实体消歧
 - D 写入 state/index
-- E 写入章节摘要
+- E 创建摘要目录（跳过摘要生成，由 /webnovel-summarize 处理）
 - F AI 场景切片
 - G RAG 向量索引
 - H 风格样本评估（若跳过写 0）
@@ -298,6 +287,6 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "{project_root}" style extrac
 3. ✅ 消歧结果合理（高置信度 > 80%）
 4. ✅ 场景切片数量合理（通常 3-6 个/章）
 5. ✅ 向量成功存入数据库
-6. ✅ 章节摘要文件生成成功
+6. ✅ `.webnovel/summaries/` 目录已创建（摘要文件由 /webnovel-summarize 生成）
 7. ✅ chapter_meta 写入 state.json
 8. ✅ 输出格式为有效 JSON

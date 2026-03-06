@@ -23,9 +23,9 @@ tools: Read Write Edit Grep Bash Task
 
 ## 模式定义
 
-- `/webnovel-write`：Step 1 → 2A → 2B → 3 → 4 → 5 → 6
-- `/webnovel-write --fast`：Step 1 → 2A → 3 → 4 → 5 → 6（跳过 2B）
-- `/webnovel-write --minimal`：Step 1 → 2A → 3（仅3个基础审查）→ 4 → 5 → 6
+- `/webnovel-write`：Step 1 → 2A → 2B → 3 → 4 → 5 → 5.5 → 6
+- `/webnovel-write --fast`：Step 1 → 2A → 3 → 4 → 5 → 5.5 → 6（跳过 2B）
+- `/webnovel-write --minimal`：Step 1 → 2A → 3（仅3个基础审查）→ 4 → 5 → 5.5 → 6
 
 最小产物（所有模式）：
 - `正文/第{NNNN}章.md`
@@ -278,7 +278,6 @@ cat "${SKILL_ROOT}/references/writing/typesetting.md"
 执行后检查（最小白名单）：
 - `.webnovel/state.json`
 - `.webnovel/index.db`
-- `.webnovel/summaries/ch{chapter_padded}.md`
 - `.webnovel/observability/data_agent_timing.jsonl`（观测日志）
 
 性能要求：
@@ -287,6 +286,24 @@ cat "${SKILL_ROOT}/references/writing/typesetting.md"
 
 债务利息：
 - 默认关闭，仅在用户明确要求或开启追踪时执行（见 `step-5-debt-switch.md`）。
+
+### Step 5.5：增强摘要生成（新增）
+
+**必做**：调用 `/webnovel-summarize` 生成增强章节摘要。
+
+```bash
+# 内部调用 webnovel-summarize skill
+# 输出: .webnovel/summaries/ch{chapter_padded}.md (300-500字详细摘要)
+```
+
+摘要生成规则：
+- 字数：300-500字（比 data-agent 基础摘要更详细）
+- 包含：剧情主线 + 伏笔追踪 + 情绪节奏 + 承接设计
+- 用途：供 context-agent 滑动窗口检索，替代 RAG 向量检索
+
+验证：
+- 确认 `.webnovel/summaries/ch{chapter_padded}.md` 存在且字数 >= 300
+- 确认包含必需字段：`## 剧情主线`、`## 伏笔状态`、`## 承接点`
 
 ### Step 6：Git 备份（可失败但需说明）
 
@@ -306,8 +323,9 @@ git commit -m "Ch{chapter_num}: {title}"
 2. Step 3 已产出 `overall_score` 且 `review_metrics` 成功落库
 3. Step 4 已处理全部 `critical`，`high` 未修项有 deviation 记录
 4. Step 4 的 `anti_ai_force_check=pass`（基于全文检查；fail 时不得进入 Step 5）
-5. Step 5 已回写 `state.json`、`index.db`、`summaries/ch{chapter_padded}.md`
-6. 若开启性能观测，已读取最新 timing 记录并输出结论
+5. Step 5 已回写 `state.json`、`index.db`
+6. Step 5.5 已生成增强摘要 `summaries/ch{chapter_padded}.md`（>= 300字，含必需字段）
+7. 若开启性能观测，已读取最新 timing 记录并输出结论
 
 ## 验证与交付
 
